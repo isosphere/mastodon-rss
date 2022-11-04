@@ -173,14 +173,14 @@ fn main() {
             let status = match trigger_labels {
                 Some(tw) => {
                     StatusBuilder::new()
-                        .status(format!("Source: {}\n{}\n{}\n{}", feed.label, this_title, stripped_description, this_url))
+                        .status(format!("Source: {}\n\n{}\n{}\n{}", feed.label, this_title, stripped_description, this_url))
                         .sensitive(false)
                         .spoiler_text(format!("CW: {}", tw.into_iter().collect::<Vec<String>>().join(",")))
                         .language(Language::Eng).build().unwrap()
                 },
                 None => {
                     StatusBuilder::new()
-                        .status(format!("Source: {}\n{}\n{}\n{}", feed.label, this_title, stripped_description, this_url))
+                        .status(format!("Source: {}\n\n{}\n{}\n{}", feed.label, this_title, stripped_description, this_url))
                         .sensitive(false)
                         .language(Language::Eng).build().unwrap()
                 }
