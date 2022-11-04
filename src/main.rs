@@ -3,6 +3,7 @@ use elefren::Language;
 use dissolve::strip_html_tags;
 use sqlite::{Connection, Value};
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::fs;
 use regex::Regex;
 use rss::Channel;
@@ -10,19 +11,30 @@ use rss::Channel;
 mod config;
 use config::ConfigFile;
 
-fn scan_for_triggers(configuration: &ConfigFile, title: &str, description: &str) -> Option<String> {
+fn scan_for_triggers(configuration: &ConfigFile, title: &str, description: &str) -> Option<HashSet<String>> {
+    let mut triggers = HashSet::new();
+
     for trigger_type in &configuration.content_warnings {
+        if triggers.contains(&trigger_type.label) {
+            continue
+        }
+
         for phrase in &trigger_type.phrases {
             let re = Regex::new(&format!(r"(?i)\b{}s?\b", phrase)).unwrap();
             let phrase_found = re.is_match(title) || re.is_match(description);
 
             if phrase_found {
-                return Some(trigger_type.label.to_owned());
+                triggers.insert(trigger_type.label.to_owned());
+                break;
             } 
         }
     }
 
-    None
+    if triggers.is_empty() {
+        None
+    } else {
+        Some(triggers)
+    }
 }
 
 
@@ -137,7 +149,7 @@ fn main() {
             let upper_description = this_description.to_uppercase();
 
             // check for content warnings
-            let trigger_label = scan_for_triggers(&configuration, &upper_title, &upper_description);
+            let trigger_labels = scan_for_triggers(&configuration, &upper_title, &upper_description);
             
             let mut stripped_description = match item.description() {
                 None => panic!("Description empty, impossible."),
@@ -154,16 +166,16 @@ fn main() {
                 this_title = re.replace_all(&this_title, &formatted).to_string();
             }
 
-            println!("Content warning = {:?}", trigger_label);
-            println!("{}\n{}", this_title, stripped_description);
+            println!("Content warning = {:?}", trigger_labels);
+            println!("Source: {}\n{}\n{}", feed.label, this_title, stripped_description);
 
             // title, link, description, content warning
-            let status = match trigger_label {
+            let status = match trigger_labels {
                 Some(tw) => {
                     StatusBuilder::new()
                         .status(format!("{}\n{}\n{}", this_title, stripped_description, this_url))
                         .sensitive(false)
-                        .spoiler_text(format!("CW: {}", tw))
+                        .spoiler_text(format!("CW: {}", tw.into_iter().collect::<Vec<String>>().join(",")))
                         .language(Language::Eng).build().unwrap()
                 },
                 None => {
