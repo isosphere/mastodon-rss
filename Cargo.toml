@@ -6,8 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11.12", features = ["serde_json", "json", "gzip"] }
+elefren = { path = "../elefren" }
+dissolve = "0.2.2"
+reqwest = { version = "0.11.12", features = ["blocking", "gzip"] }
 serde = "1.0.147"
-serde-xml-rs = "0.6.0"
+regex = "1"
+rss = "2.0"
 serde_derive = "1.0.147"
+sqlite = "0.27"
 toml = "0.5.9"
