@@ -1,15 +1,25 @@
-use elefren::prelude::*;
-use elefren::Language;
+use clap::Parser;
 use dissolve::strip_html_tags;
+use elefren::Language;
+use elefren::prelude::*;
+use regex::Regex;
+use rss::Channel;
 use sqlite::{Connection, Value};
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fs;
-use regex::Regex;
-use rss::Channel;
 
 mod config;
 use config::ConfigFile;
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// path to config file
+    #[arg(short, long, default_value = "config.toml")]
+    config: String,
+}
+
 
 fn scan_for_triggers(configuration: &ConfigFile, title: &str, description: &str) -> Option<HashSet<String>> {
     let mut triggers = HashSet::new();
@@ -62,7 +72,9 @@ fn mark_posted(url: &str, connection: &Connection) {
 
 
 fn main() {
-    let config_file = "config.toml";
+    let args = Args::parse();
+
+    let config_file = args.config;
 
     let configuration: ConfigFile = {
         let contents = match fs::read_to_string(config_file) {
