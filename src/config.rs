@@ -17,7 +17,9 @@ pub struct MastodonConfig {
     pub account_id: String,
     pub api_url: String,
     pub base_url: String,
-    pub redirect_url: String
+    pub redirect_url: String,
+    /// public or unlisted
+    pub visibility: String 
 }
 
 #[derive(Deserialize)]

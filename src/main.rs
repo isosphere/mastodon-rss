@@ -1,6 +1,7 @@
 use clap::Parser;
 use dissolve::strip_html_tags;
 use elefren::Language;
+use elefren::status_builder::Visibility;
 use elefren::prelude::*;
 use regex::Regex;
 use rss::Channel;
@@ -89,6 +90,18 @@ fn main() {
             Err(e) => {
                 panic!("Failed to parse config file: {}", e);
             }
+        }
+    };
+
+    let post_visibility = match configuration.mastodon.visibility.to_uppercase().as_str() {
+        "PUBLIC" => {
+            Visibility::Public
+        },
+        "UNLISTED" => {
+            Visibility::Unlisted
+        },
+        _ => {
+            panic!("Invalid posting visibility specified in configuration, must be either public or unlisted.");
         }
     };
 
@@ -187,11 +200,13 @@ fn main() {
                     .status(format!("Source: {}\n\n{}\n{}\n{}", feed.label, this_title, stripped_description, this_url))
                     .sensitive(false)
                     .spoiler_text(format!("CW: {}", tw.into_iter().collect::<Vec<String>>().join(",")))
+                    .visibility(post_visibility)
                     .language(Language::Eng).build().unwrap()
             } else {
                 StatusBuilder::new()
                     .status(format!("Source: {}\n\n{}\n{}\n{}", feed.label, this_title, stripped_description, this_url))
                     .sensitive(false)
+                    .visibility(post_visibility)
                     .language(Language::Eng).build().unwrap()
             };
 
