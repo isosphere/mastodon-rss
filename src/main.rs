@@ -21,6 +21,16 @@ struct Args {
     config: String,
 }
 
+const MAX_DESCRIPTION_LENGTH: usize = 400;
+
+// https://stackoverflow.com/a/38461750
+fn truncate(s: &str, max_chars: usize) -> &str {
+    match s.char_indices().nth(max_chars) {
+        None => s,
+        Some((idx, _)) => &s[..idx],
+    }
+}
+
 
 fn scan_for_triggers(configuration: &ConfigFile, title: &str, description: &str) -> Option<HashSet<String>> {
     let mut triggers = HashSet::new();
@@ -191,8 +201,8 @@ fn main() {
                 this_title = re.replace_all(&this_title, &formatted).to_string();
             }
 
-            println!("Content warning = {:?}", trigger_labels);
-            println!("Source: {}\n{}\n{}", feed.label, this_title, stripped_description);
+            // ensure we stay under the max status length
+            stripped_description = truncate(&stripped_description, MAX_DESCRIPTION_LENGTH).to_owned();
 
             // title, link, description, content warning
             let status = if let Some(tw) = trigger_labels {
