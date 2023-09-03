@@ -19,6 +19,8 @@ struct Args {
     /// path to config file
     #[arg(short, long, default_value = "config.toml")]
     config: String,
+    #[arg(short, long, default_value = "false")]
+    skip_mastodon: bool
 }
 
 const MAX_DESCRIPTION_LENGTH: usize = 400;
@@ -145,12 +147,21 @@ fn main() {
         token: Cow::from(configuration.mastodon.client_token.to_owned()),
     };
 
+    let mastodon = match args.skip_mastodon {
+        true => {
+            println!("Skipping Mastodon connection.");
+            None
+        },
+        false => {
     let mastodon = Mastodon::from(data);
     if let Err(e) = mastodon.verify_credentials() {
         panic!("Unable to verify login credentials with Mastodon instance: {}", e);
     }
-
     println!("Mastodon credentials verified.");
+            Some(mastodon)            
+        }
+    };
+
     const NAME: &str = env!("CARGO_PKG_NAME");
     const VERSION: &str = env!("CARGO_PKG_VERSION");
     let user_agent_string = format!("{}/{}", NAME, VERSION);
@@ -224,9 +235,15 @@ fn main() {
                     .language(Language::Eng).build().unwrap()
             };
 
+            if let Some(mastodon) = &mastodon {
             mastodon.new_status(status).unwrap();
+                println!("Status posted.");
+            } else {
+                println!("Would have posted: {:?}", status);
+            }
+            
             mark_posted(this_url, &connection);
-            println!("Status posted.");
+            println!("Marked as posted.");
         }
     }
 }
