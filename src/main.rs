@@ -23,7 +23,7 @@ struct Args {
     skip_mastodon: bool
 }
 
-const MAX_DESCRIPTION_LENGTH: usize = 400;
+const MAX_DESCRIPTION_LENGTH: usize = 300;
 
 // https://stackoverflow.com/a/38461750
 fn truncate(s: &str, max_chars: usize) -> &str {
