@@ -5,7 +5,7 @@ use elefren::status_builder::Visibility;
 use elefren::prelude::*;
 use regex::Regex;
 use rss::Channel;
-use sqlite::{Connection, Value};
+use sqlite::Connection;
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fs;
@@ -62,13 +62,13 @@ fn scan_for_triggers(configuration: &ConfigFile, title: &str, description: &str)
 
 
 fn get_sql_match_count(url: &str, connection: &Connection) -> i64 {
-    let mut cursor = connection.prepare("SELECT COUNT(*) FROM articles WHERE url=?").unwrap().into_cursor().bind(&[Value::String(url.to_owned())]).unwrap();
+    let mut cursor = connection.prepare("SELECT COUNT(*) FROM articles WHERE url=?").unwrap().into_iter().bind((1, url)).unwrap();
     
     match cursor.next() {
         None => panic!("Count of matches returned none, rather than a number."),
         Some(r) => {
             match r {
-                Ok(c) => c.get::<i64, _>(0),
+                Ok(c) => c.read::<i64, _>(0),
                 Err(e) => {
                     panic!("Database error when counting matches: {}", e);
                 }
@@ -79,7 +79,7 @@ fn get_sql_match_count(url: &str, connection: &Connection) -> i64 {
 
 
 fn mark_posted(url: &str, connection: &Connection) {
-    let mut cursor = connection.prepare("INSERT INTO articles (url) VALUES(?)").unwrap().into_cursor().bind(&[Value::String(url.to_owned())]).unwrap();
+    let mut cursor = connection.prepare("INSERT INTO articles (url) VALUES(?)").unwrap().into_iter().bind((1, url)).unwrap();
     cursor.next();
 }
 
@@ -120,13 +120,13 @@ fn main() {
     let connection = sqlite::open(&configuration.persistence.database_path).unwrap();
 
     // does our persistence table exist?
-    let mut cursor = connection.prepare("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='articles'").unwrap().into_cursor();
+    let mut cursor = connection.prepare("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='articles'").unwrap().into_iter();
     
     let table_count = match cursor.next() {
         None => panic!("Count of tables returned none, rather than a number."),
         Some(r) => {
             match r {
-                Ok(c) => c.get::<i64, _>(0),
+                Ok(c) => c.read::<i64, _>(0),
                 Err(e) => {
                     panic!("Database error when counting tables: {}", e);
                 }
@@ -153,11 +153,11 @@ fn main() {
             None
         },
         false => {
-    let mastodon = Mastodon::from(data);
-    if let Err(e) = mastodon.verify_credentials() {
-        panic!("Unable to verify login credentials with Mastodon instance: {}", e);
-    }
-    println!("Mastodon credentials verified.");
+            let mastodon = Mastodon::from(data);
+            if let Err(e) = mastodon.verify_credentials() {
+                panic!("Unable to verify login credentials with Mastodon instance: {}", e);
+            }
+            println!("Mastodon credentials verified.");
             Some(mastodon)            
         }
     };
@@ -234,9 +234,9 @@ fn main() {
                     .visibility(post_visibility)
                     .language(Language::Eng).build().unwrap()
             };
-
+            
             if let Some(mastodon) = &mastodon {
-            mastodon.new_status(status).unwrap();
+                mastodon.new_status(status).unwrap();
                 println!("Status posted.");
             } else {
                 println!("Would have posted: {:?}", status);
