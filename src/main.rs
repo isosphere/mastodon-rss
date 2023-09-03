@@ -151,10 +151,14 @@ fn main() {
     }
 
     println!("Mastodon credentials verified.");
+    const NAME: &str = env!("CARGO_PKG_NAME");
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    let user_agent_string = format!("{}/{}", NAME, VERSION);
+    let client = reqwest::blocking::Client::builder().user_agent(user_agent_string).build().unwrap();
 
     for feed in &configuration.feeds {
         println!("Fetching {}", feed.label);
-        let content = reqwest::blocking::get(&feed.url).unwrap().bytes().unwrap();
+        let content = client.get(&feed.url).send().unwrap().bytes().unwrap();
         let channel = Channel::read_from(&content[..]).unwrap();
         
         for item in channel.items() {
