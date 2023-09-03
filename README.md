@@ -18,6 +18,18 @@ visibility = "public"
 [persistence]
 database_path = "mastodon.db"
 
+[filters]
+hashtags = [
+    "halifax", "moncton", "amherst", "cumberland", "irving",  "Nova Scotia Power",
+    "cape breton", "new glasgow", "canada", "rcmp", "annapolis valley",
+    "nova scotia", "prince edward island", "pei", "mental health", "provincial budget",
+    "COVID-19", "province house", "housing", "moncton", "new brunswick",
+    "NB Power", "first nation", "saint john", "prime minister", "Charlottetown",
+    "st. john's", "labrador city", "sydney", "truro", "dartmouth", "peggys cove", "amherst",
+    "fredericton", "summerside", "miramichi", "Newfoundland and Labrador", "Newfoundland",
+    "Mi'kmaq"
+]
+
 [[content_warnings]]
 label = "Crime"
 phrases = [
