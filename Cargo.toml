@@ -14,5 +14,5 @@ regex = "1"
 rss = "2.0"
 serde_derive = "1.0.147"
 sqlite = "0.31"
-toml = "0.7.6"
+toml = "0.8.0"
 clap = { version = "4.0.22", features = ["derive"] }
