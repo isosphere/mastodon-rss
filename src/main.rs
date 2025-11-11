@@ -167,6 +167,7 @@ fn main() {
     let user_agent_string = format!("{}/{}", NAME, VERSION);
     let client = reqwest::blocking::Client::builder().user_agent(user_agent_string).build().unwrap();
 
+    let re_fmt = Regex::new(r"\W").unwrap();
     for feed in &configuration.feeds {
         println!("Fetching {}", feed.label);
         let content = client.get(&feed.url).send().unwrap().bytes().unwrap();
@@ -203,13 +204,12 @@ fn main() {
             
             let mut stripped_description = match item.description() {
                 None => panic!("Description empty, impossible."),
-                Some(d) => strip_html_tags(d).join::<&str>("\n")
+                Some(d) => strip_html_tags(d)
             };
 
             // hashtag-ify
             for tag in &configuration.filters.hashtags {
                 let re = Regex::new(&format!(r"(?i)\b(?P<text>{})\b", tag)).unwrap();
-                let re_fmt = Regex::new(r"\W").unwrap();
                 let formatted = format!("#{}", re_fmt.replace_all(tag, ""));
 
                 stripped_description = re.replace_all(&stripped_description, &formatted).to_string();

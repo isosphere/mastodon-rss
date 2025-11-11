@@ -1,18 +1,18 @@
 [package]
 name = "mastodon-rss"
-version = "0.1.1"
-edition = "2021"
+version = "0.1.2"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 elefren = { git = "https://github.com/isosphere/elefren" }
-dissolve = "0.2.2"
-reqwest = { version = "0.11.12", features = ["blocking", "gzip"] }
-serde = "1.0.147"
+dissolve = { git = "https://github.com/nickelc/dissolve.git", branch = "modernize" }
+reqwest = { version = "0.12", features = ["blocking", "gzip"] }
+serde = "1"
 regex = "1"
 rss = "2.0"
-serde_derive = "1.0.147"
-sqlite = "0.31"
-toml = "0.8.0"
+serde_derive = "1"
+sqlite = "0.37"
+toml = "0.9"
 clap = { version = "4.0.22", features = ["derive"] }
