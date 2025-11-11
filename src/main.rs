@@ -1,3 +1,6 @@
+use std::borrow::Cow;
+use std::fs;
+
 use clap::Parser;
 use dissolve::strip_html_tags;
 use elefren::Language;
@@ -5,13 +8,11 @@ use elefren::status_builder::Visibility;
 use elefren::prelude::*;
 use regex::Regex;
 use rss::Channel;
-use sqlite::Connection;
-use std::borrow::Cow;
-use std::collections::HashSet;
-use std::fs;
 
-mod config;
-use config::ConfigFile;
+use mastodon_rss::{
+    config::ConfigFile,
+    truncate, get_sql_match_count, scan_for_triggers, mark_posted
+};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -24,65 +25,6 @@ struct Args {
 }
 
 const MAX_DESCRIPTION_LENGTH: usize = 300;
-
-// https://stackoverflow.com/a/38461750
-fn truncate(s: &str, max_chars: usize) -> &str {
-    match s.char_indices().nth(max_chars) {
-        None => s,
-        Some((idx, _)) => &s[..idx],
-    }
-}
-
-
-fn scan_for_triggers(configuration: &ConfigFile, title: &str, description: &str) -> Option<HashSet<String>> {
-    let mut triggers = HashSet::new();
-
-    for trigger_type in &configuration.content_warnings {
-        if triggers.contains(&trigger_type.label) {
-            continue
-        }
-
-        for phrase in &trigger_type.phrases {
-            let re = Regex::new(&format!(r"(?i)\b{}s?\b", phrase)).unwrap();
-            let phrase_found = re.is_match(title) || re.is_match(description);
-
-            if phrase_found {
-                triggers.insert(trigger_type.label.to_owned());
-                break;
-            } 
-        }
-    }
-
-    if triggers.is_empty() {
-        None
-    } else {
-        Some(triggers)
-    }
-}
-
-
-fn get_sql_match_count(url: &str, connection: &Connection) -> i64 {
-    let mut cursor = connection.prepare("SELECT COUNT(*) FROM articles WHERE url=?").unwrap().into_iter().bind((1, url)).unwrap();
-    
-    match cursor.next() {
-        None => panic!("Count of matches returned none, rather than a number."),
-        Some(r) => {
-            match r {
-                Ok(c) => c.read::<i64, _>(0),
-                Err(e) => {
-                    panic!("Database error when counting matches: {}", e);
-                }
-            }
-        }
-    }
-}
-
-
-fn mark_posted(url: &str, connection: &Connection) {
-    let mut cursor = connection.prepare("INSERT INTO articles (url) VALUES(?)").unwrap().into_iter().bind((1, url)).unwrap();
-    cursor.next();
-}
-
 
 fn main() {
     let args = Args::parse();
