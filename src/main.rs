@@ -24,7 +24,7 @@ struct Args {
     skip_mastodon: bool
 }
 
-const MAX_DESCRIPTION_LENGTH: usize = 300;
+const MAX_DESCRIPTION_LENGTH: usize = 350;
 
 fn main() {
     let args = Args::parse();
