@@ -134,44 +134,40 @@ fn main() {
 
             let upper_title = this_title.to_uppercase();
 
-            let this_description = match item.description() {
+            let mut this_description = match item.description() {
                 None => continue,
-                Some(d) => d
+                Some(d) => {
+                    let stripped = strip_html_tags(d);
+                    // ensure we stay under the max status length
+                    truncate(&stripped, MAX_DESCRIPTION_LENGTH).to_owned()
+                }
             };
 
             let upper_description = this_description.to_uppercase();
 
             // check for content warnings
             let trigger_labels = scan_for_triggers(&configuration, &upper_title, &upper_description);
-            
-            let mut stripped_description = match item.description() {
-                None => panic!("Description empty, impossible."),
-                Some(d) => strip_html_tags(d)
-            };
 
             // hashtag-ify
             for tag in &configuration.filters.hashtags {
                 let re = Regex::new(&format!(r"(?i)\b(?P<text>{})\b", tag)).unwrap();
                 let formatted = format!("#{}", re_fmt.replace_all(tag, ""));
 
-                stripped_description = re.replace_all(&stripped_description, &formatted).to_string();
+                this_description = re.replace_all(&this_description, &formatted).to_string();
                 this_title = re.replace_all(&this_title, &formatted).to_string();
             }
-
-            // ensure we stay under the max status length
-            stripped_description = truncate(&stripped_description, MAX_DESCRIPTION_LENGTH).to_owned();
 
             // title, link, description, content warning
             let status = if let Some(tw) = trigger_labels {
                 StatusBuilder::new()
-                    .status(format!("Source: {}\n\n{}\n{}\n{}", feed.label, this_title, stripped_description, this_url))
+                    .status(format!("Source: {}\n\n{}\n{}\n{}", feed.label, this_title, this_description, this_url))
                     .sensitive(false)
                     .spoiler_text(format!("CW: {}", tw.into_iter().collect::<Vec<String>>().join(",")))
                     .visibility(post_visibility)
                     .language(Language::Eng).build().unwrap()
             } else {
                 StatusBuilder::new()
-                    .status(format!("Source: {}\n\n{}\n{}\n{}", feed.label, this_title, stripped_description, this_url))
+                    .status(format!("Source: {}\n\n{}\n{}\n{}", feed.label, this_title, this_description, this_url))
                     .sensitive(false)
                     .visibility(post_visibility)
                     .language(Language::Eng).build().unwrap()
